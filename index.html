@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marathi Sign Language Recognition</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+
+        h1 {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .container {
+            display: flex;
+            justify-content: space-between;
+            width: 80%;
+            height: 70%;
+            /* Adjusting the height for better view */
+            margin-top: 30px;
+        }
+
+        .left-section,
+        .right-section {
+            width: 48%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #video {
+            border: 2px solid black;
+            width: 100%;
+            height: auto;
+            background-color: #e0e0e0;
+        }
+
+        #canvas {
+            display: none;
+        }
+
+        #captureButton {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+
+        #captureButton:hover {
+            background-color: #45a049;
+        }
+
+        #capturedImage {
+            margin-top: 20px;
+            border: 2px solid black;
+            width: 100%;
+            height: auto;
+        }
+
+        .sentence-container {
+            margin-top: 30px;
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        #result,
+        #sentence {
+            margin: 0 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Marathi Sign Language Recognition</h1>
+
+    <div class="container">
+        <!-- Left Section: Webcam Feed -->
+        <div class="left-section">
+            <h3>Sign Through Camera</h3>
+            <video id="video" autoplay></video>
+            <canvas id="canvas"></canvas>
+            <button id="captureButton">Capture Sign Gesture</button>
+        </div>
+
+        <!-- Right Section: Captured Image -->
+        <div class="right-section">
+            <h3>Captured Image</h3>
+            <img id="capturedImage" src="" alt="Captured Sign Image" style="display:none;">
+        </div>
+    </div>
+
+    <!-- Bottom Center: Predicted Sentence -->
+    <div class="sentence-container">
+        <div id="result">Predicted Gesture: </div>
+        <div id="sentence">Sentence: </div>
+    </div>
+
+    <script>
+        const videoElement = document.getElementById('video');
+        const canvasElement = document.getElementById('canvas');
+        const context = canvasElement.getContext('2d');
+        const resultDiv = document.getElementById('result');
+        const sentenceDiv = document.getElementById('sentence');
+        const captureButton = document.getElementById('captureButton');
+        const capturedImage = document.getElementById('capturedImage');
+        let sentence = '';
+        let mediaStream = null;
+
+        // Access the webcam stream
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                mediaStream = stream;
+                videoElement.srcObject = stream;
+
+                // Set canvas size to match video dimensions
+                videoElement.onloadedmetadata = () => {
+                    canvasElement.width = videoElement.videoWidth;
+                    canvasElement.height = videoElement.videoHeight;
+                };
+            })
+            .catch(err => {
+                console.log("Error accessing webcam: ", err);
+            });
+
+        // Function to capture image from webcam and send to backend for prediction
+        function captureImage() {
+            // Draw the current frame from the video onto the canvas
+            context.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+            const imageData = canvasElement.toDataURL('image/jpeg');
+
+            // Stop the webcam stream after capture
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+            }
+
+            // Show the captured image in the right section
+            capturedImage.src = imageData;
+            capturedImage.style.display = 'block';
+
+            // Send image to backend for prediction
+            fetch('/predict', {
+                method: 'POST',
+                body: JSON.stringify({ image: imageData }),
+                headers: { 'Content-Type': 'application/json' },
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const predictedLabel = data.sentence;  // Getting the predicted Marathi sentence from backend
+                    sentence += predictedLabel + " ";  // Append to sentence
+                    resultDiv.innerHTML = `Predicted Gesture: ${predictedLabel}`; // Display the latest gesture
+                    sentenceDiv.innerHTML = `Sentence: ${sentence}`;  // Display the updated sentence
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        // Event listener for capturing image on button click
+        captureButton.addEventListener('click', captureImage);
+    </script>
+
+</body>
+
+</html>

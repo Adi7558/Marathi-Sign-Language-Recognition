@@ -16,10 +16,10 @@ datagen = ImageDataGenerator(
 )
 
 # Input image path
-input_image_path = 'C:/Users/HP/Desktop/Marathi-Sign-Recognition/MSL/original_images/ह.jpg'  # Replace with your image name if different
+input_image_path = 'C:/Users/HP/Desktop/Marathi-Sign-Language-Recognition/MSL/original_images/Backspace.jpg'  # Replace with your image name if different
 
 # Output directory
-output_dir = 'C:/Users/HP/Desktop/Marathi-Sign-Recognition/MSL/ह'
+output_dir = 'C:/Users/HP/Desktop/Marathi-Sign-Language-Recognition/MSL/Backspace'
 os.makedirs(output_dir, exist_ok=True)  # Create the output folder if it doesn’t exist
 
 # Load and process the image
@@ -29,7 +29,7 @@ x = x.reshape((1,) + x.shape)  # Reshape for generator
 
 # Generate and save 50 augmented images
 i = 0
-for batch in datagen.flow(x, batch_size=1, save_to_dir=output_dir, save_prefix='ह', save_format='jpeg'):
+for batch in datagen.flow(x, batch_size=1, save_to_dir=output_dir, save_prefix='backspace', save_format='jpeg'):
     i += 1
     if i >= 50:
         break  # Stop after generating 50 images
